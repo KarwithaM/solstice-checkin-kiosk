@@ -134,8 +134,7 @@ This is a classic distributed systems problem called "eventual consistency."
 I implemented a timestamp-based comparison. 
 Each status update stores a timestamp in Redis. 
 When a new webhook arrives, I compare its timestamp to the stored one. 
-If the incoming confirmation is older, I ignore it and return a 200 OK (so the printer doesn't retry). 
-This ensures the most recent state always wins, even if confirmations arrive out of order. 
+If the incoming confirmation is older, I ignore it and return a 200 OK (so the printer doesn't retry). This ensures the most recent state always wins, even if confirmations arrive out of order. 
 I also added validation to ensure the webhook payload includes the required fields.
 
 **Time Breakdown:**
@@ -242,3 +241,34 @@ This proves the async check-in workflow is functioning: QR scan → duplicate ch
 - Input: {"qrCode": "ATT001"}
 - Output: 202 Accepted with pending status
 - Screenshot: Captured in terminal
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 08: Resolving JavaScript Type Mismatch in Redis Response
+
+**Task:** Fix duplicate scan protection that was failing to trigger.
+
+**Challenge / Blocker:** 
+Despite the code being deployed, duplicate scans were still returning 202 Success. 
+Debug logs revealed the root cause: `currentStatus` was evaluating to `{ result: 'pending' }` (an object) instead of `'pending'` (a string). 
+In JavaScript, strict equality (`===`) between an object and a string always evaluates to `false`.
+
+**Resources Consulted:** 
+- MDN Web Docs: typeof operator (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof)
+- Upstash REST API response structure documentation.
+
+**Decision & Resolution:** 
+I updated `api/checkin.js` to safely unwrap the Redis response. 
+I added a ternary operator: `typeof currentStatusRaw === 'object' ? currentStatusRaw.result : currentStatusRaw`. This ensures that whether the helper function returns a raw string or a wrapped object, the variable evaluated in the `if` statement is always the primitive string. 
+I also updated `lib/redis.js` to explicitly return `data.result` to prevent this wrapping at the source. After deploying, the duplicate scan correctly returned a 409 Conflict error.
+
+**Key Insight:** 
+Always inspect the actual data type of API responses, not just the value. 
+Third-party APIs often wrap responses in objects (e.g., `{ result: "value" }`). 
+Assuming the response is a primitive string is a common source of silent logical failures.
+
+**Time Breakdown:**
+- Analyzing debug logs: 13 mins
+- Updating api/checkin.js and lib/redis.js: 15 mins
+- Waiting for deploy and re-testing: 2 mins
+- Journaling: 5 mins
