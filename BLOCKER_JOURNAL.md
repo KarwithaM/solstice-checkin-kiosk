@@ -113,3 +113,34 @@ I used LPUSH to add jobs to the queue (FIFO order) and SET to store status + tim
 - Committing and verifying structure: 10 mins
 - Journaling: 10 mins
 - Buffer: 5 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 08: Webhook Endpoint with Out-of-Order Protection
+
+**Task:** Build the /api/webhook endpoint that receives printer callbacks and updates attendee status, handling out-of-order confirmations.
+
+**Challenge / Blocker:** 
+The pivot requirement mentioned "confirmations may arrive out of order." 
+I had to figure out how to prevent an old confirmation from overwriting a newer status. 
+This is a classic distributed systems problem called "eventual consistency."
+
+**Resources Consulted:** 
+- Redis Docs: SET command (https://redis.io/commands/set/)
+- JavaScript Date parsing for timestamp comparison
+- System Design: Handling out-of-order events in distributed systems (https://redis.io/commands/set/)
+
+**Decision & Resolution:** 
+I implemented a timestamp-based comparison. 
+Each status update stores a timestamp in Redis. 
+When a new webhook arrives, I compare its timestamp to the stored one. 
+If the incoming confirmation is older, I ignore it and return a 200 OK (so the printer doesn't retry). 
+This ensures the most recent state always wins, even if confirmations arrive out of order. 
+I also added validation to ensure the webhook payload includes the required fields.
+
+**Time Breakdown:**
+- Writing webhook.js logic: 35 mins
+- Designing timestamp comparison: 20 mins
+- Testing edge cases mentally: 15 mins
+- Journaling: 10 mins
+- Buffer: 5 mins
