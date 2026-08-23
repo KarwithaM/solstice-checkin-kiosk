@@ -17,13 +17,14 @@ module.exports = async (req, res) => {
 
     const attendee = attendees[qrCode];
 
-    // 3. DUPLICATE PROTECTION: Check current status in Redis
+       // 3. DUPLICATE PROTECTION: Check current status in Redis
+    // Block if they are already 'pending' (print job queued) OR 'checked_in' (already done)
     const currentStatus = await redisCommand('GET', `attendee:${qrCode}:status`);
 
-    if (currentStatus === 'checked_in') {
+    if (currentStatus === 'pending' || currentStatus === 'checked_in') {
       return res.status(409).json({ 
         error: "Duplicate scan", 
-        message: `${attendee.name} is already checked in. No second badge will be printed.` 
+        message: `${attendee.name} is already processing or checked in. No second badge will be printed.` 
       });
     }
 
