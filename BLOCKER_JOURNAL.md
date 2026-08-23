@@ -272,3 +272,31 @@ Assuming the response is a primitive string is a common source of silent logical
 - Updating api/checkin.js and lib/redis.js: 15 mins
 - Waiting for deploy and re-testing: 2 mins
 - Journaling: 5 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 09: Test 3 - Webhook Callback & State Transition Validation
+
+**Task:** Simulate the badge printer sending a "print complete" webhook and verify the attendee's status transitions from "pending" to "checked_in".
+
+**Challenge / Blocker:** 
+Testing a webhook without a real external service sending the payload. 
+I had to manually construct the POST request to mimic the printer's exact payload structure.
+
+**Resources Consulted:** 
+- Upstash Docs: SET command for state updates (https://redis.io/commands/set/)
+- HTTP Status Codes: 200 OK (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200)
+
+**Decision & Resolution:** 
+I used curl to send a POST request to /api/webhook with a mock payload containing qrCode, jobId, status ("checked_in"), and completedAt. 
+The endpoint successfully returned a 200 OK. 
+I then verified the state change by calling GET /api/status?qrCode=ATT001, which confirmed the status had updated from "pending" to "checked_in" and the timestamp was recorded.
+
+**Key Insight:** 
+Webhooks are the backbone of async systems. By decoupling the "request to print" from the "confirmation of print", the kiosk UI remains responsive, and the system can handle printer delays or failures gracefully without blocking the user.
+
+**Time Breakdown:**
+- Constructing webhook curl command: 2 mins
+- Executing and verifying 200 OK response: 5 mins
+- Verifying status change via GET endpoint: 5 mins
+- Screenshots and journaling: 5 mins
