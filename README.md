@@ -22,3 +22,4 @@ This project represents a Day 4 pivot from a synchronous polling model to an asy
 
 ## Blocker Journal
 All learning challenges, errors, and resolutions are documented in `BLOCKER_JOURNAL.md`.
+
