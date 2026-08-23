@@ -169,3 +169,76 @@ The endpoint reads from both the static attendees.json (for name/QR mapping) and
 - Testing default value handling: 15 mins
 - Journaling: 10 mins
 - Buffer: 5 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 07: End-to-End Debugging Session - From 500 Errors to Success
+
+**Task:** Execute the /api/checkin endpoint and achieve successful check-in with duplicate protection and Redis queue integration.
+
+**Challenge / Blocker:** 
+This was an extensive, multi-hour debugging session that involved resolving SEVEN distinct blockers in sequence:
+
+1. **Missing attendees.json file** - The function crashed with FUNCTION_INVOCATION_FAILED because the static attendee data file was never committed to GitHub.
+
+2. **Missing Environment Variables** - After adding attendees.json, received 500 Internal Server Error. Vercel logs showed "Failed to parse URL from undefined" - the UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN were not set in Vercel.
+
+3. **Environment Variables Not Injected** - After adding env vars, still got errors. Learned that Vercel only injects environment variables at BUILD time, requiring a full redeploy (not just a refresh).
+
+4. **Missing HTTP POST Method** - After env vars were confirmed working, still got 500 errors. Discovered Upstash REST API requires ALL requests to use POST method, even for Redis GET commands. My lib/redis.js was missing `method: 'POST'` in the fetch options.
+
+5. **WRONGPASS Authentication Error** - After fixing POST method, received `{"error":"WRONGPASS invalid or missing auth token"}`. The token in Vercel had hidden whitespace or was incorrectly copied.
+
+6. **Token Validation** - Used direct curl testing to verify the token worked: `curl https://UPSTASH_URL/PING -H "Authorization: Bearer TOKEN" -X POST` returned PONG, confirming the token was valid but Vercel config was wrong.
+
+7. **Final Redeploy** - After regenerating and correctly pasting the token (no spaces!), triggered a fresh Vercel redeploy.
+
+**Resources Consulted:** 
+- Vercel Docs: Environment Variables (https://vercel.com/docs/concepts/projects/environment-variables)
+- Vercel Docs: Function Debugging (https://vercel.com/docs/functions/debugging)
+- Upstash Docs: REST API Authentication (https://upstash.com/docs/redis/api/rest/getstarted)
+- Upstash Docs: Troubleshooting WRONGPASS (https://upstash.com/docs/redis/troubleshooting/http_unauthorized)
+- MDN Web Docs: Fetch API method property (https://developer.mozilla.org/en-US/docs/Web/API/Request/method)
+- Node.js process.env documentation
+
+**Decision & Resolution:** 
+I systematically debugged each layer of the stack:
+1. First verified file structure (attendees.json exists in GitHub)
+2. Then verified environment variables (added to Vercel, triggered redeploy)
+3. Then verified HTTP method (added method: 'POST' to lib/redis.js)
+4. Then verified authentication (used direct curl PING test to isolate token validity)
+5. Finally achieved success with proper token and redeploy
+
+The final working curl command returned:
+{
+  "success":true,
+  "message":"Print job queued for Alice Johnson",
+  "status":"pending",
+  "jobId":"job_1787487120702_ATT001",
+  "note":"Screen should show 'Pending...' until webhook confirmation arrives"
+}
+
+This proves the async check-in workflow is functioning: QR scan → duplicate check → Redis queue → pending status.
+
+**Key Insights:** 
+1. **Environment variables require redeploy** - Vercel injects env vars at build time, not runtime. Always redeploy after changing them.
+2. **API provider quirks matter** - Upstash requires POST for ALL requests, even GET commands. Never assume HTTP method based on operation name.
+3. **Test incrementally** - Used test-env endpoint to verify env vars, used curl PING to verify token. Isolate each layer.
+4. **Whitespace kills** - Hidden spaces in copied tokens cause authentication failures. Use copy buttons, not manual selection.
+5. **Read the logs** - Vercel Functions tab shows exact error messages. The "WRONGPASS" error told us exactly what was wrong.
+6. **Persistence pays** - Seven blockers in a row could have been discouraging, but each one taught something valuable about serverless architecture.
+
+**Time Investment:**
+- Missing attendees.json: 5 mins
+- Environment variables setup: 25 mins
+- POST method fix: 10 mins
+- Token authentication debugging: 40 mins
+- Testing and verification: 15 mins
+- Journaling: 15 mins
+- **Total: ~110 minutes of intensive debugging**
+
+**Test 1 Status: COMPLETE**
+- Endpoint: POST /api/checkin
+- Input: {"qrCode": "ATT001"}
+- Output: 202 Accepted with pending status
+- Screenshot: Captured in terminal
