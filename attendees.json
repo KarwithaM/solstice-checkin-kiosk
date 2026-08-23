@@ -1,0 +1,20 @@
+{
+  "ATT001": {
+    "name": "Alice Johnson",
+    "qrCode": "ATT001",
+    "status": "not_checked_in",
+    "lastUpdated": null
+  },
+  "ATT002": {
+    "name": "Bob Smith",
+    "qrCode": "ATT002",
+    "status": "not_checked_in",
+    "lastUpdated": null
+  },
+  "ATT003": {
+    "name": "Charlie Davis",
+    "qrCode": "ATT003",
+    "status": "not_checked_in",
+    "lastUpdated": null
+  }
+}
