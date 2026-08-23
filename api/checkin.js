@@ -18,11 +18,11 @@ module.exports = async (req, res) => {
     const attendee = attendees[qrCode];
 
            // 3. DUPLICATE PROTECTION: Check current status in Redis
-    const currentStatus = await redisCommand('GET', `attendee:${qrCode}:status`);
+    const currentStatusRaw = await redisCommand('GET', `attendee:${qrCode}:status`);
     
-    // TEMPORARY DEBUG LOGS
-    console.log("DEBUG: QR Code =", qrCode);
-    console.log("DEBUG: Current Status from Redis =", currentStatus);
+    // Unwrap the value: if it's an object { result: 'pending' }, extract the string. 
+    // Otherwise, use the string directly.
+    const currentStatus = typeof currentStatusRaw === 'object' ? currentStatusRaw.result : currentStatusRaw;
 
     if (currentStatus === 'pending' || currentStatus === 'checked_in') {
       return res.status(409).json({ 
