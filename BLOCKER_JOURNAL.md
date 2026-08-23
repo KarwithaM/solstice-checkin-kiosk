@@ -29,3 +29,36 @@ The old Northstar repo serves as the "before pivot" baseline, and this new repo 
 - Writing README: 5 mins
 - Initializing blocker journal: 5 mins
 - Buffer: 2 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 02: Vercel Environment Variables Setup
+
+**Task:** Configure Upstash Redis credentials as environment variables in Vercel for secure access from serverless functions.
+
+**Challenge / Blocker:** 
+I initially didn't understand that environment variables require a redeployment to take effect. 
+I added them but my code still couldn't access them until I redeployed.
+
+**Resources Consulted:** 
+- Vercel Docs: Environment Variables (https://vercel.com/docs/concepts/projects/environment-variables)
+- Upstash Docs: Getting REST API credentials (https://upstash.com/docs/redis/overall/getstarted)
+
+**Decision & Resolution:** 
+I added two environment variables (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN) in Vercel's Settings → Environment Variables section. 
+I selected one environments (Production and Preview) to ensure consistency. 
+After adding them, I redeployed the project via the Deployments tab. 
+I verified the setup by creating a temporary test endpoint that confirmed both variables were accessible via process.env.
+
+**Security Note:** 
+I never committed the actual credentials to GitHub. 
+The .env.example file serves as documentation for what variables are needed, but the real values live only in Vercel's secure environment.
+
+**Time Breakdown:**
+- Navigating Vercel UI: 3 mins
+- Copying credentials from Upstash: 5 mins
+- Adding both variables: 5 mins
+- Redeploying: 2 mins
+- Creating test endpoint to verify: 5 mins
+- Journaling: 5 mins
+- Buffer: 5 mins
