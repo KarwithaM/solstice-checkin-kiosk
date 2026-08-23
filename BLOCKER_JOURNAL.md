@@ -4,7 +4,7 @@
 **Phase:** Day 4 Pivot - Async Architecture  
 **Context:** Pivoted from Northstar Retail inventory sync to Solstice Events check-in kiosk
 
----
+---------------------------------------------------------------------------------------------------
 
 ## Log Entry 01: Repository Setup & Pivot Context
 
@@ -85,3 +85,31 @@ I navigated to the Vercel dashboard, copied the exact "Visit" URL, appended `/ap
 - Verifying GitHub file structure: 3 mins
 - Testing correct URL: 2 mins
 - Journaling: 5 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 04: Check-in Endpoint with Duplicate Protection
+
+**Task:** Build the /api/checkin endpoint that handles QR scans, prevents duplicate badges, and queues print jobs asynchronously.
+
+**Challenge / Blocker:** 
+I had to figure out how to call Upstash Redis from a Vercel serverless function without installing a heavy SDK. 
+I also needed to decide WHERE to store the "source of truth" for attendee status — the static JSON file or the live Redis database.
+
+**Resources Consulted:** 
+- Upstash Docs: REST API Reference (https://upstash.com/docs/redis/api/rest/getstarted)
+- Redis Docs: LPUSH command (https://redis.io/commands/lpush/)
+- HTTP Status Codes: 409 Conflict (https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409)
+
+**Decision & Resolution:** 
+I built a custom REST helper (lib/redis.js) that encodes Redis commands in the URL path, which is how Upstash's REST API works. 
+I made Redis the source of truth for attendee status because the JSON file is static and can't handle real-time state changes. 
+For duplicate protection, I check the Redis status BEFORE queuing a new job, and return a 409 Conflict if the attendee is already checked in. 
+I used LPUSH to add jobs to the queue (FIFO order) and SET to store status + timestamp.]
+
+**Time Breakdown:**
+- Building redis.js helper: 20 mins
+- Writing checkin.js logic: 30 mins
+- Committing and verifying structure: 10 mins
+- Journaling: 10 mins
+- Buffer: 5 mins
