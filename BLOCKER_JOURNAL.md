@@ -62,3 +62,26 @@ The .env.example file serves as documentation for what variables are needed, but
 - Creating test endpoint to verify: 5 mins
 - Journaling: 5 mins
 - Buffer: 5 mins
+
+----------------------------------------------------------------------------------------------------
+
+## Log Entry 03: Vercel 404 Deployment Not Found
+
+**Task:** Verify that environment variables are correctly injected into the Vercel serverless function via a test endpoint.
+
+**Challenge / Blocker:** 
+When visiting the test endpoint URL (https://solstice-checkin-kiosk-project.vercel.app/api/test-env), I received a `404: Deployment not found` error. 
+
+**Resources Consulted:** 
+- Vercel Dashboard UI to locate the exact auto-generated project URL.
+- GitHub repository file tree to verify file existence.
+
+**Decision & Resolution:** 
+I realized I had manually typed a guessed URL (`solstice-checkin-kiosk-project.vercel.app`) instead of using the actual auto-generated URL provided by Vercel (`solstice-checkin-kiosk.vercel.app`). 
+I navigated to the Vercel dashboard, copied the exact "Visit" URL, appended `/api/test-env`, and the endpoint successfully returned the masked environment variables, proving they were securely injected.
+
+**Time Breakdown:**
+- Troubleshooting the 404: 15 mins
+- Verifying GitHub file structure: 3 mins
+- Testing correct URL: 2 mins
+- Journaling: 5 mins
