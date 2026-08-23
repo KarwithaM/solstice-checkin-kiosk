@@ -116,7 +116,7 @@ I used LPUSH to add jobs to the queue (FIFO order) and SET to store status + tim
 
 ---------------------------------------------------------------------------------------------------
 
-## Log Entry 08: Webhook Endpoint with Out-of-Order Protection
+## Log Entry 05: Webhook Endpoint with Out-of-Order Protection
 
 **Task:** Build the /api/webhook endpoint that receives printer callbacks and updates attendee status, handling out-of-order confirmations.
 
@@ -142,5 +142,30 @@ I also added validation to ensure the webhook payload includes the required fiel
 - Writing webhook.js logic: 35 mins
 - Designing timestamp comparison: 20 mins
 - Testing edge cases mentally: 15 mins
+- Journaling: 10 mins
+- Buffer: 5 mins
+
+----------------------------------------------------------------------------------------------------
+
+## Log Entry 06: Status Endpoint for Kiosk UI
+
+**Task:** Build the /api/status endpoint that returns the current check-in state for any attendee, allowing the kiosk UI to display "Pending..." or "Checked In".
+
+**Challenge / Blocker:** 
+I needed to decide whether to return a default status (like "not_checked_in") when Redis has no data yet, or return null. 
+I also had to handle the case where the attendee exists in the JSON file but has never been scanned.]
+
+**Resources Consulted:** 
+- Redis Docs: GET command (https://redis.io/commands/get/)
+- Express.js response patterns for optional fields
+
+**Decision & Resolution:** 
+I chose to return "not_checked_in" as the default status when Redis returns null, because this gives the UI a clear state to work with. 
+I also return the jobId (if it exists) so the UI can display which print job is pending. 
+The endpoint reads from both the static attendees.json (for name/QR mapping) and Redis (for live status), demonstrating a hybrid data source pattern.]
+
+**Time Breakdown:**
+- Writing status.js logic: 30 mins
+- Testing default value handling: 15 mins
 - Journaling: 10 mins
 - Buffer: 5 mins
