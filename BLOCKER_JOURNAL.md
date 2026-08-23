@@ -300,3 +300,32 @@ Webhooks are the backbone of async systems. By decoupling the "request to print"
 - Executing and verifying 200 OK response: 5 mins
 - Verifying status change via GET endpoint: 5 mins
 - Screenshots and journaling: 5 mins
+
+---------------------------------------------------------------------------------------------------
+
+## Log Entry 10: Test 4 - Out-of-Order Webhook Protection Validation
+
+**Task:** Validate that the system correctly ignores delayed, out-of-order webhook confirmations to prevent race conditions and state regression.
+
+**Challenge / Blocker:** 
+Simulating a network delay where an older webhook arrives after a newer one has already been processed. 
+If not handled, this could accidentally revert an attendee's status from "checked_in" back to "pending".]
+
+**Resources Consulted:** 
+- System Design: Handling out-of-order events in distributed systems.
+- JavaScript Date parsing for timestamp comparison.
+
+**Decision & Resolution:** 
+I sent a POST request to /api/webhook with a mock payload containing an older timestamp (12:00:00Z) than the one currently stored in Redis (12:45:00Z). 
+The endpoint correctly evaluated the timestamps, rejected the update, and returned a 200 OK with the message "Out-of-order confirmation ignored". 
+A subsequent GET request to /api/status confirmed that the status remained "checked_in" and the timestamp was unchanged.]
+
+**Key Insight:** 
+In distributed systems, you cannot guarantee the order of message delivery. 
+Implementing a simple timestamp-based comparison (or version vector) is a lightweight, highly effective way to ensure "eventual consistency" and prevent older events from overwriting newer, correct states.
+
+**Time Breakdown:**
+- Constructing out-of-order webhook curl command: 2 mins
+- Executing and verifying rejection response: 5 mins
+- Verifying state remained unchanged via GET endpoint: 5 mins
+- Screenshots and journaling: 5 mins
